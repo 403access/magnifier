@@ -1,0 +1,77 @@
+﻿
+using System.Windows.Forms;
+
+namespace Magnifier
+{
+    partial class SettingsForm
+    {
+        /// <summary>
+        /// Required designer variable.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer generated code
+
+        /// <summary>
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
+            this.components = new System.ComponentModel.Container();
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(800, 450);
+
+            this.Text = "Settings";
+            this.Size = new System.Drawing.Size(300, 150);
+
+            var fpsLabel = new Label
+            {
+                Text = "FPS:",
+                Location = new System.Drawing.Point(20, 20),
+                AutoSize = true
+            };
+
+            var fpsInput = new NumericUpDown
+            {
+                Minimum = 1,
+                Maximum = 120,
+                Value = parentMagnifier.FPS,
+                Location = new System.Drawing.Point(80, 18),
+                Width = 60
+            };
+
+            var saveButton = new Button
+            {
+                Text = "Save",
+                Location = new System.Drawing.Point(100, 80),
+                AutoSize = true
+            };
+
+            saveButton.Click += (s, e) =>
+            {
+                parentMagnifier.FPS = (int)fpsInput.Value;
+                this.Close();
+            };
+
+            this.Controls.Add(fpsLabel);
+            this.Controls.Add(fpsInput);
+            this.Controls.Add(saveButton);
+        }
+
+        #endregion
+    }
+}

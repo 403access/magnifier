@@ -12,6 +12,8 @@ namespace Magnifier
         private float zoomFactor = 2.0f;
         private int regionSize = 200;
         private int _fps = 60;
+        private NotifyIcon trayIcon;
+        private ContextMenuStrip trayMenu;
 
         public int FPS
         {
@@ -28,11 +30,15 @@ namespace Magnifier
 
         public Magnifier()
         {
+            // Initialize Form properties
             this.FormBorderStyle = FormBorderStyle.None;
             this.TopMost = true;
             this.ShowInTaskbar = false;
             this.BackColor = Color.Black;
             this.TransparencyKey = Color.Black;
+
+            // Initialize tray icon and menu
+            InitializeTrayIcon();
 
             // Initialize timer for updates
             updateTimer = new Timer { Interval = 1000 / _fps }; // Default to 60 FPS
@@ -41,6 +47,51 @@ namespace Magnifier
 
             // Set the initial size of the magnifier
             this.Size = new Size(regionSize * 2, regionSize * 2);
+        }
+
+        private void InitializeTrayIcon()
+        {
+            // Create the tray menu
+            trayMenu = new ContextMenuStrip();
+            trayMenu.Items.Add("Toggle Magnifier", null, ToggleMagnifier);
+            trayMenu.Items.Add("Settings", null, OpenSettings);
+            trayMenu.Items.Add("Exit", null, ExitApplication);
+
+            // Create the tray icon
+            trayIcon = new NotifyIcon
+            {
+                Icon = SystemIcons.Application, // Replace with a custom icon if needed
+                ContextMenuStrip = trayMenu,
+                Text = "Magnifier",
+                Visible = true
+            };
+            trayIcon.DoubleClick += OpenSettings;
+        }
+
+        private void ToggleMagnifier(object sender, EventArgs e)
+        {
+            this.Visible = !this.Visible;
+        }
+
+        private void OpenSettings(object sender, EventArgs e)
+        {
+            using (var settingsForm = new SettingsForm(this))
+            {
+                settingsForm.ShowDialog();
+            }
+        }
+
+        private void ExitApplication(object sender, EventArgs e)
+        {
+            trayIcon.Visible = false;
+            Application.Exit();
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            HotKeyManager.UnregisterHotKey(this);
+            trayIcon.Dispose();
+            base.OnFormClosed(e);
         }
 
         protected override void OnLoad(EventArgs e)
@@ -57,12 +108,6 @@ namespace Magnifier
         private void HotKeyManager_HotKeyPressed(object sender, HotKeyEventArgs e)
         {
             this.Visible = !this.Visible; // Toggle visibility
-        }
-
-        protected override void OnFormClosed(FormClosedEventArgs e)
-        {
-            HotKeyManager.UnregisterHotKey(this);
-            base.OnFormClosed(e);
         }
 
         private void UpdateMagnifier(object sender, EventArgs e)
