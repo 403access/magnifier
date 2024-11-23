@@ -9,6 +9,8 @@ namespace Magnifier
     public partial class Magnifier : Form
     {
         private Timer updateTimer;
+        private Bitmap magnifiedBitmap;
+        private Rectangle lastCaptureArea;
         private Color transparencyKey = Color.Black;
         private float zoomFactor = 2.0f;
         private int regionSize = 200;
@@ -50,12 +52,12 @@ namespace Magnifier
 
         public Magnifier()
         {
-            // Initialize Form properties
             this.FormBorderStyle = FormBorderStyle.None;
             this.TopMost = true;
             this.ShowInTaskbar = false;
             this.BackColor = Color.Black;
             this.TransparencyKey = Color.Black;
+            this.DoubleBuffered = true; // Enable double buffering
 
             // Initialize tray icon and menu
             InitializeTrayIcon();
@@ -67,20 +69,21 @@ namespace Magnifier
 
             // Set the initial size of the magnifier
             this.Size = new Size(regionSize * 2, regionSize * 2);
+
+            // Initialize bitmap for magnified area
+            magnifiedBitmap = new Bitmap(regionSize, regionSize);
         }
 
         private void InitializeTrayIcon()
         {
-            // Create the tray menu
             trayMenu = new ContextMenuStrip();
             trayMenu.Items.Add("Toggle Magnifier", null, ToggleMagnifier);
             trayMenu.Items.Add("Settings", null, OpenSettings);
             trayMenu.Items.Add("Exit", null, ExitApplication);
 
-            // Create the tray icon
             trayIcon = new NotifyIcon
             {
-                Icon = SystemIcons.Application, // Replace with a custom icon if needed
+                Icon = SystemIcons.Application,
                 ContextMenuStrip = trayMenu,
                 Text = "Magnifier",
                 Visible = true
@@ -111,6 +114,7 @@ namespace Magnifier
         {
             HotKeyManager.UnregisterHotKey(this);
             trayIcon.Dispose();
+            magnifiedBitmap?.Dispose();
             base.OnFormClosed(e);
         }
 
@@ -118,23 +122,20 @@ namespace Magnifier
         {
             base.OnLoad(e);
 
-            // Register global hotkey (CTRL + SHIFT + Z)
             HotKeyManager.RegisterHotKey(this, Keys.Z, KeyModifiers.Control | KeyModifiers.Shift);
-
-            // Subscribe to the hotkey pressed event
             HotKeyManager.HotKeyPressed += HotKeyManager_HotKeyPressed;
         }
 
         private void HotKeyManager_HotKeyPressed(object sender, HotKeyEventArgs e)
         {
-            this.Visible = !this.Visible; // Toggle visibility
+            this.Visible = !this.Visible;
         }
 
         private void UpdateMagnifier(object sender, EventArgs e)
         {
             var cursorPos = Cursor.Position;
 
-            // Adjust position dynamically
+            // Adjust position
             int screenWidth = Screen.PrimaryScreen.Bounds.Width;
             int screenHeight = Screen.PrimaryScreen.Bounds.Height;
             int offsetX = 20;
@@ -149,47 +150,61 @@ namespace Magnifier
             else
                 this.Top = cursorPos.Y - this.Height - offsetX;
 
-            // Capture screen region
+            // Capture region
             int captureX = Math.Max(0, cursorPos.X - (int)((regionSize / 2) / zoomFactor));
             int captureY = Math.Max(0, cursorPos.Y - (int)((regionSize / 2) / zoomFactor));
             int captureWidth = (int)(regionSize / zoomFactor);
             int captureHeight = (int)(regionSize / zoomFactor);
 
-            using (var bitmap = new Bitmap(captureWidth, captureHeight))
+            // Ensure the bitmap matches the capture size
+            if (magnifiedBitmap.Width != captureWidth || magnifiedBitmap.Height != captureHeight)
             {
-                using (var g = Graphics.FromImage(bitmap))
-                {
-                    try
-                    {
-                        g.CopyFromScreen(captureX, captureY, 0, 0, new Size(captureWidth, captureHeight));
-                    }
-                    catch
-                    {
-                        return; // Ignore errors
-                    }
-                }
-
-                using (var g = this.CreateGraphics())
-                {
-                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                    g.Clear(Color.Transparent);
-                    g.DrawImage(bitmap, new Rectangle(0, 0, this.Width, this.Height));
-                    DrawGlowingBorder(g);
-                }
+                magnifiedBitmap?.Dispose(); // Dispose of the old bitmap
+                magnifiedBitmap = new Bitmap(captureWidth, captureHeight); // Create a new one
             }
+
+            var captureArea = new Rectangle(captureX, captureY, captureWidth, captureHeight);
+
+            // Only update if capture area has changed
+            if (captureArea != lastCaptureArea)
+            {
+                using (var g = Graphics.FromImage(magnifiedBitmap))
+                {
+                    g.CopyFromScreen(captureArea.Location, Point.Empty, captureArea.Size);
+                }
+                lastCaptureArea = captureArea;
+                Invalidate(); // Trigger repaint
+            }
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+
+            // Ensure the graphics context uses high-quality settings
+            e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
+            // Scale and draw the captured bitmap to fill the magnifier window
+            e.Graphics.DrawImage(
+                magnifiedBitmap,
+                new Rectangle(0, 0, this.Width, this.Height), // Destination rectangle (entire window)
+                new Rectangle(0, 0, magnifiedBitmap.Width, magnifiedBitmap.Height), // Source rectangle (entire bitmap)
+                GraphicsUnit.Pixel
+            );
+
+            // Draw the glowing border
+            DrawGlowingBorder(e.Graphics);
         }
 
         private void DrawGlowingBorder(Graphics g)
         {
             using (GraphicsPath path = new GraphicsPath())
             {
-                int borderThickness = 12; // Thickness of the border
-                int innerRadius = borderThickness; // Inner glow radius
+                int borderThickness = 12;
+                int innerRadius = borderThickness;
 
-                // Outer circle (full size of the magnifier)
                 Rectangle outerCircle = new Rectangle(0, 0, this.Width, this.Height);
-
-                // Inner circle (creates the hollow center)
                 Rectangle innerCircle = new Rectangle(
                     innerRadius,
                     innerRadius,
@@ -197,20 +212,13 @@ namespace Magnifier
                     this.Height - 2 * innerRadius
                 );
 
-                // Add the outer and inner ellipses to the path
                 path.AddEllipse(outerCircle);
                 path.AddEllipse(innerCircle);
 
-                // Create a PathGradientBrush for the glow effect
                 using (PathGradientBrush brush = new PathGradientBrush(path))
                 {
-                    // Set the center color to transparent to avoid filling the middle
                     brush.CenterColor = Color.Transparent;
-
-                    // Set the border color for the glow effect
-                    brush.SurroundColors = new[] { Color.Cyan }; // Replace with desired color
-
-                    // Draw the border glow
+                    brush.SurroundColors = new[] { Color.Cyan };
                     g.FillPath(brush, path);
                 }
             }
@@ -220,7 +228,6 @@ namespace Magnifier
         {
             base.OnResize(e);
 
-            // Set window shape to circular
             int diameter = Math.Min(this.Width, this.Height);
             using (GraphicsPath path = new GraphicsPath())
             {
