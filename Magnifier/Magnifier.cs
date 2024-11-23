@@ -170,14 +170,35 @@ namespace Magnifier
         {
             using (GraphicsPath path = new GraphicsPath())
             {
-                int glowWidth = 8;
-                path.AddEllipse(new Rectangle(glowWidth, glowWidth, this.Width - 2 * glowWidth, this.Height - 2 * glowWidth));
+                int borderThickness = 12; // Thickness of the border
+                int innerRadius = borderThickness; // Inner glow radius
 
+                // Outer circle (full size of the magnifier)
+                Rectangle outerCircle = new Rectangle(0, 0, this.Width, this.Height);
+
+                // Inner circle (creates the hollow center)
+                Rectangle innerCircle = new Rectangle(
+                    innerRadius,
+                    innerRadius,
+                    this.Width - 2 * innerRadius,
+                    this.Height - 2 * innerRadius
+                );
+
+                // Add the outer and inner ellipses to the path
+                path.AddEllipse(outerCircle);
+                path.AddEllipse(innerCircle);
+
+                // Create a PathGradientBrush for the glow effect
                 using (PathGradientBrush brush = new PathGradientBrush(path))
                 {
-                    brush.CenterColor = Color.Cyan;
-                    brush.SurroundColors = new[] { Color.FromArgb(0, Color.Cyan) }; // Transparent edge
-                    g.FillEllipse(brush, new Rectangle(0, 0, this.Width, this.Height));
+                    // Set the center color to transparent to avoid filling the middle
+                    brush.CenterColor = Color.Transparent;
+
+                    // Set the border color for the glow effect
+                    brush.SurroundColors = new[] { Color.Cyan }; // Replace with desired color
+
+                    // Draw the border glow
+                    g.FillPath(brush, path);
                 }
             }
         }
