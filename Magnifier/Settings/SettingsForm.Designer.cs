@@ -126,6 +126,26 @@ namespace Magnifier
 
             currentY += rowHeight;
 
+            var staticModeLabel = new Label
+            {
+                Text = "Static Magnification:",
+                Location = new Point(labelX, currentY),
+                AutoSize = true
+            };
+
+            var staticModeCheckbox = new CheckBox
+            {
+                Checked = parentMagnifier.IsStaticMagnification,
+                Location = new Point(inputX, currentY - 3)
+            };
+
+            staticModeCheckbox.CheckedChanged += (s, e) =>
+            {
+                parentMagnifier.IsStaticMagnification = staticModeCheckbox.Checked;
+            };
+
+            currentY += rowHeight;
+
             // Save Button
             var saveButton = new Button
             {
@@ -139,7 +159,8 @@ namespace Magnifier
             {
                 parentMagnifier.FPS = (int)fpsInput.Value;
                 parentMagnifier.ZoomFactor = (float)zoomInput.Value;
-                parentMagnifier.TransparencyKeyColor = selectedTransparencyKey; // Apply selected transparency key
+                parentMagnifier.IsStaticMagnification = staticModeCheckbox.Checked; // Save static magnification setting
+                parentMagnifier.TransparencyKeyColor = selectedTransparencyKey; // Apply transparency key
                 this.Close();
             };
 
@@ -151,6 +172,8 @@ namespace Magnifier
             this.Controls.Add(transparencyLabel);
             this.Controls.Add(colorPreview);
             this.Controls.Add(colorButton);
+            this.Controls.Add(staticModeLabel);
+            this.Controls.Add(staticModeCheckbox);
             this.Controls.Add(saveButton);
         }
 

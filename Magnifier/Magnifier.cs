@@ -11,12 +11,19 @@ namespace Magnifier
         private Timer updateTimer;
         private Bitmap magnifiedBitmap;
         private Rectangle lastCaptureArea;
+        private bool isStaticMagnification = false;
         private Color transparencyKey = Color.Black;
         private float zoomFactor = 2.0f;
         private int regionSize = 200;
         private int _fps = 60;
         private NotifyIcon trayIcon;
         private ContextMenuStrip trayMenu;
+
+        public bool IsStaticMagnification
+        {
+            get => isStaticMagnification;
+            set => isStaticMagnification = value;
+        }
 
         public Color TransparencyKeyColor
         {
@@ -123,19 +130,38 @@ namespace Magnifier
             base.OnLoad(e);
 
             HotKeyManager.RegisterHotKey(this, Keys.Z, KeyModifiers.Control | KeyModifiers.Shift);
+            HotKeyManager.RegisterHotKey(this, Keys.R, KeyModifiers.Control | KeyModifiers.Shift); // New hotkey for refresh
+
             HotKeyManager.HotKeyPressed += HotKeyManager_HotKeyPressed;
         }
 
         private void HotKeyManager_HotKeyPressed(object sender, HotKeyEventArgs e)
         {
-            this.Visible = !this.Visible;
+            if (e.HotKeyId == 1) // Toggle visibility
+            {
+                this.Visible = !this.Visible;
+            }
+            else if (e.HotKeyId == 2) // Refresh magnified area
+            {
+                if (isStaticMagnification)
+                {
+                    UpdateMagnifiedArea();
+                }
+            }
         }
 
         private void UpdateMagnifier(object sender, EventArgs e)
         {
+            if (isStaticMagnification) return; // Skip updates if in static mode
+
+            UpdateMagnifiedArea();
+        }
+
+        private void UpdateMagnifiedArea()
+        {
             var cursorPos = Cursor.Position;
 
-            // Adjust position
+            // Adjust position dynamically
             int screenWidth = Screen.PrimaryScreen.Bounds.Width;
             int screenHeight = Screen.PrimaryScreen.Bounds.Height;
             int offsetX = 20;
@@ -156,25 +182,25 @@ namespace Magnifier
             int captureWidth = (int)(regionSize / zoomFactor);
             int captureHeight = (int)(regionSize / zoomFactor);
 
-            // Ensure the bitmap matches the capture size
             if (magnifiedBitmap.Width != captureWidth || magnifiedBitmap.Height != captureHeight)
             {
-                magnifiedBitmap?.Dispose(); // Dispose of the old bitmap
-                magnifiedBitmap = new Bitmap(captureWidth, captureHeight); // Create a new one
+                magnifiedBitmap?.Dispose();
+                magnifiedBitmap = new Bitmap(captureWidth, captureHeight);
             }
 
-            var captureArea = new Rectangle(captureX, captureY, captureWidth, captureHeight);
-
-            // Only update if capture area has changed
-            if (captureArea != lastCaptureArea)
+            using (var g = Graphics.FromImage(magnifiedBitmap))
             {
-                using (var g = Graphics.FromImage(magnifiedBitmap))
+                try
                 {
-                    g.CopyFromScreen(captureArea.Location, Point.Empty, captureArea.Size);
+                    g.CopyFromScreen(captureX, captureY, 0, 0, new Size(captureWidth, captureHeight));
                 }
-                lastCaptureArea = captureArea;
-                Invalidate(); // Trigger repaint
+                catch
+                {
+                    return; // Ignore errors
+                }
             }
+
+            Invalidate(); // Trigger repaint
         }
 
         protected override void OnPaint(PaintEventArgs e)
