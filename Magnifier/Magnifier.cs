@@ -152,13 +152,6 @@ namespace Magnifier
 
         private void UpdateMagnifier(object sender, EventArgs e)
         {
-            if (isStaticMagnification) return; // Skip updates if in static mode
-
-            UpdateMagnifiedArea();
-        }
-
-        private void UpdateMagnifiedArea()
-        {
             var cursorPos = Cursor.Position;
 
             // Adjust position dynamically
@@ -175,6 +168,17 @@ namespace Magnifier
                 this.Top = cursorPos.Y + offsetX;
             else
                 this.Top = cursorPos.Y - this.Height - offsetX;
+
+            // In dynamic mode, update the magnified content
+            if (!isStaticMagnification)
+            {
+                UpdateMagnifiedArea(); // Update the magnified content
+            }
+        }
+
+        private void UpdateMagnifiedArea()
+        {
+            var cursorPos = Cursor.Position;
 
             // Capture region
             int captureX = Math.Max(0, cursorPos.X - (int)((regionSize / 2) / zoomFactor));
@@ -207,19 +211,23 @@ namespace Magnifier
         {
             base.OnPaint(e);
 
-            // Ensure the graphics context uses high-quality settings
-            e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-            e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            // Draw magnified area
+            if (magnifiedBitmap != null)
+            {
+                // Ensure the graphics context uses high-quality settings
+                e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
 
-            // Scale and draw the captured bitmap to fill the magnifier window
-            e.Graphics.DrawImage(
-                magnifiedBitmap,
-                new Rectangle(0, 0, this.Width, this.Height), // Destination rectangle (entire window)
-                new Rectangle(0, 0, magnifiedBitmap.Width, magnifiedBitmap.Height), // Source rectangle (entire bitmap)
-                GraphicsUnit.Pixel
-            );
+                // Scale and draw the captured bitmap to fill the magnifier window
+                e.Graphics.DrawImage(
+                    magnifiedBitmap,
+                    new Rectangle(0, 0, this.Width, this.Height),
+                    new Rectangle(0, 0, magnifiedBitmap.Width, magnifiedBitmap.Height),
+                    GraphicsUnit.Pixel
+                );
+            }
 
-            // Draw the glowing border
+            // Draw border
             DrawGlowingBorder(e.Graphics);
         }
 
