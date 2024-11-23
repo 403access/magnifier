@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using Magnifier.HotKeys;
 
 namespace Magnifier
 {
@@ -26,6 +27,28 @@ namespace Magnifier
 
             // Set the initial size of the magnifier
             this.Size = new Size(regionSize * 2, regionSize * 2);
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+
+            // Register global hotkey (CTRL + SHIFT + Z)
+            HotKeyManager.RegisterHotKey(this, Keys.Z, KeyModifiers.Control | KeyModifiers.Shift);
+
+            // Subscribe to the hotkey pressed event
+            HotKeyManager.HotKeyPressed += HotKeyManager_HotKeyPressed;
+        }
+
+        private void HotKeyManager_HotKeyPressed(object sender, HotKeyEventArgs e)
+        {
+            this.Visible = !this.Visible; // Toggle visibility
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            HotKeyManager.UnregisterHotKey(this);
+            base.OnFormClosed(e);
         }
 
         private void UpdateMagnifier(object sender, EventArgs e)
