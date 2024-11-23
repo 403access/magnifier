@@ -34,6 +34,11 @@ namespace Magnifier
             this.components = new System.ComponentModel.Container();
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.StartPosition = FormStartPosition.CenterScreen; // Center the window
+            this.FormBorderStyle = FormBorderStyle.FixedDialog; // No resizing
+            this.MaximizeBox = false; // Disable maximize button
+            this.MinimizeBox = false; // Disable minimize button
+            this.ControlBox = true; // Keep only the close button (X)
 
             this.Text = "Settings";
             this.Size = new System.Drawing.Size(300, 150);
