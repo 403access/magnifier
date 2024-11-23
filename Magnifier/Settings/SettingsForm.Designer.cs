@@ -1,4 +1,5 @@
 ﻿
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace Magnifier
@@ -33,7 +34,6 @@ namespace Magnifier
         {
             this.components = new System.ComponentModel.Container();
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
             this.StartPosition = FormStartPosition.CenterScreen; // Center the window
             this.FormBorderStyle = FormBorderStyle.FixedDialog; // No resizing
             this.MaximizeBox = false; // Disable maximize button
@@ -41,12 +41,18 @@ namespace Magnifier
             this.ControlBox = true; // Keep only the close button (X)
 
             this.Text = "Settings";
-            this.Size = new System.Drawing.Size(300, 150);
+            this.Size = new System.Drawing.Size(400, 250);
 
+            int labelX = 20;  // X position for labels
+            int inputX = 150; // X position for inputs
+            int rowHeight = 40; // Vertical space between rows
+            int currentY = 20; // Starting Y position
+
+            // FPS Label and Input
             var fpsLabel = new Label
             {
                 Text = "FPS:",
-                Location = new System.Drawing.Point(20, 20),
+                Location = new Point(labelX, currentY),
                 AutoSize = true
             };
 
@@ -55,15 +61,17 @@ namespace Magnifier
                 Minimum = 1,
                 Maximum = 120,
                 Value = parentMagnifier.FPS,
-                Location = new System.Drawing.Point(80, 18),
+                Location = new Point(inputX, currentY - 3), // Align with label
                 Width = 60
             };
+
+            currentY += rowHeight;
 
             // Zoom Factor Label and Input
             var zoomLabel = new Label
             {
                 Text = "Zoom Factor:",
-                Location = new System.Drawing.Point(20, 60),
+                Location = new Point(labelX, currentY),
                 AutoSize = true
             };
 
@@ -74,22 +82,32 @@ namespace Magnifier
                 DecimalPlaces = 1,
                 Increment = 0.1M,
                 Value = (decimal)parentMagnifier.ZoomFactor,
-                Location = new System.Drawing.Point(120, 58),
+                Location = new Point(inputX, currentY - 3),
                 Width = 60
             };
 
-            // Transparency Key Label and Button
+            currentY += rowHeight;
+
+            // Transparency Key Label, Preview, and Button
             var transparencyLabel = new Label
             {
                 Text = "Transparency Key:",
-                Location = new System.Drawing.Point(20, 100),
+                Location = new Point(labelX, currentY),
                 AutoSize = true
+            };
+
+            var colorPreview = new Panel
+            {
+                BackColor = selectedTransparencyKey,
+                Location = new Point(inputX, currentY),
+                Size = new Size(30, 30),
+                BorderStyle = BorderStyle.FixedSingle
             };
 
             var colorButton = new Button
             {
                 Text = "Select Color",
-                Location = new System.Drawing.Point(150, 95),
+                Location = new Point(inputX + 40, currentY),
                 AutoSize = true
             };
 
@@ -97,32 +115,41 @@ namespace Magnifier
             {
                 using (ColorDialog colorDialog = new ColorDialog())
                 {
-                    colorDialog.Color = parentMagnifier.TransparencyKeyColor;
+                    colorDialog.Color = selectedTransparencyKey;
                     if (colorDialog.ShowDialog() == DialogResult.OK)
                     {
-                        parentMagnifier.TransparencyKeyColor = colorDialog.Color;
+                        selectedTransparencyKey = colorDialog.Color;
+                        colorPreview.BackColor = selectedTransparencyKey; // Update preview
                     }
                 }
             };
 
+            currentY += rowHeight;
+
+            // Save Button
             var saveButton = new Button
             {
                 Text = "Save",
-                Location = new System.Drawing.Point(100, 80),
-                AutoSize = true
+                Location = new Point(this.ClientSize.Width / 2 - 40, this.ClientSize.Height - 60), // Centered horizontally
+                AutoSize = true,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
             };
 
             saveButton.Click += (s, e) =>
             {
                 parentMagnifier.FPS = (int)fpsInput.Value;
                 parentMagnifier.ZoomFactor = (float)zoomInput.Value;
+                parentMagnifier.TransparencyKeyColor = selectedTransparencyKey; // Apply selected transparency key
                 this.Close();
             };
 
+            // Add controls to the form
             this.Controls.Add(fpsLabel);
             this.Controls.Add(fpsInput);
             this.Controls.Add(zoomLabel);
             this.Controls.Add(zoomInput);
+            this.Controls.Add(transparencyLabel);
+            this.Controls.Add(colorPreview);
             this.Controls.Add(colorButton);
             this.Controls.Add(saveButton);
         }
