@@ -78,6 +78,33 @@ namespace Magnifier
                 Width = 60
             };
 
+            // Transparency Key Label and Button
+            var transparencyLabel = new Label
+            {
+                Text = "Transparency Key:",
+                Location = new System.Drawing.Point(20, 100),
+                AutoSize = true
+            };
+
+            var colorButton = new Button
+            {
+                Text = "Select Color",
+                Location = new System.Drawing.Point(150, 95),
+                AutoSize = true
+            };
+
+            colorButton.Click += (s, e) =>
+            {
+                using (ColorDialog colorDialog = new ColorDialog())
+                {
+                    colorDialog.Color = parentMagnifier.TransparencyKeyColor;
+                    if (colorDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        parentMagnifier.TransparencyKeyColor = colorDialog.Color;
+                    }
+                }
+            };
+
             var saveButton = new Button
             {
                 Text = "Save",
@@ -96,6 +123,7 @@ namespace Magnifier
             this.Controls.Add(fpsInput);
             this.Controls.Add(zoomLabel);
             this.Controls.Add(zoomInput);
+            this.Controls.Add(colorButton);
             this.Controls.Add(saveButton);
         }
 

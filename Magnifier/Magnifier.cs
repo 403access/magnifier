@@ -9,11 +9,22 @@ namespace Magnifier
     public partial class Magnifier : Form
     {
         private Timer updateTimer;
+        private Color transparencyKey = Color.Black;
         private float zoomFactor = 2.0f;
         private int regionSize = 200;
         private int _fps = 60;
         private NotifyIcon trayIcon;
         private ContextMenuStrip trayMenu;
+
+        public Color TransparencyKeyColor
+        {
+            get => transparencyKey;
+            set
+            {
+                transparencyKey = value;
+                this.TransparencyKey = transparencyKey; // Apply the new transparency key
+            }
+        }
 
         public float ZoomFactor
         {
