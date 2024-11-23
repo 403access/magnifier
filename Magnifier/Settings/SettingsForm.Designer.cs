@@ -145,7 +145,7 @@ namespace Magnifier
             var saveButton = new Button
             {
                 Text = "Save",
-                Location = new Point(this.ClientSize.Width / 2 - 40, this.ClientSize.Height - 60), // Centered horizontally
+                Location = new Point(this.ClientSize.Width / 2 - 40, this.ClientSize.Height - 40), // Centered horizontally
                 AutoSize = true,
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
             };
