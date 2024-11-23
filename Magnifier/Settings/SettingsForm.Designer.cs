@@ -135,13 +135,8 @@ namespace Magnifier
 
             var staticModeCheckbox = new CheckBox
             {
-                Checked = parentMagnifier.IsStaticMagnification,
+                Checked = parentMagnifier.IsStaticMagnification, // Reflect current state
                 Location = new Point(inputX, currentY - 3)
-            };
-
-            staticModeCheckbox.CheckedChanged += (s, e) =>
-            {
-                parentMagnifier.IsStaticMagnification = staticModeCheckbox.Checked;
             };
 
             currentY += rowHeight;
