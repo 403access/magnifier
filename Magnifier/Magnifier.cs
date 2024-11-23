@@ -120,6 +120,7 @@ namespace Magnifier
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
             HotKeyManager.UnregisterHotKey(this);
+            HotKeyManager.HotKeyPressed -= HotKeyManager_HotKeyPressed;
             trayIcon.Dispose();
             magnifiedBitmap?.Dispose();
             base.OnFormClosed(e);
