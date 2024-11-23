@@ -11,6 +11,20 @@ namespace Magnifier
         private Timer updateTimer;
         private float zoomFactor = 2.0f;
         private int regionSize = 200;
+        private int _fps = 60;
+
+        public int FPS
+        {
+            get => _fps;
+            set
+            {
+                _fps = value;
+                if (updateTimer != null)
+                {
+                    updateTimer.Interval = 1000 / _fps; // Update the timer interval based on FPS
+                }
+            }
+        }
 
         public Magnifier()
         {
@@ -20,8 +34,8 @@ namespace Magnifier
             this.BackColor = Color.Black;
             this.TransparencyKey = Color.Black;
 
-            // Timer for updating the magnifier
-            updateTimer = new Timer { Interval = 16 }; // ~60 FPS
+            // Initialize timer for updates
+            updateTimer = new Timer { Interval = 1000 / _fps }; // Default to 60 FPS
             updateTimer.Tick += UpdateMagnifier;
             updateTimer.Start();
 
