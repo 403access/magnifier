@@ -171,11 +171,7 @@ namespace Magnifier
             else
                 this.Top = cursorPos.Y - this.Height - offsetX;
 
-            // In dynamic mode, update the magnified content
-            if (!isStaticMagnification)
-            {
-                UpdateMagnifiedArea(); // Update the magnified content
-            }
+            UpdateMagnifiedArea(); // Update the magnified content
         }
 
         private void UpdateMagnifiedArea()
@@ -195,19 +191,25 @@ namespace Magnifier
                 magnifiedBitmap = new Bitmap(captureWidth, captureHeight);
             }
 
-            using (var g = Graphics.FromImage(magnifiedBitmap))
-            {
-                try
-                {
-                    g.CopyFromScreen(captureX, captureY, 0, 0, new Size(captureWidth, captureHeight));
-                }
-                catch
-                {
-                    return; // Ignore errors
-                }
-            }
+            var captureArea = new Rectangle(captureX, captureY, captureWidth, captureHeight);
 
-            Invalidate(); // Trigger repaint
+            // Only update if static magnification is disabled or capture area has changed
+            if (!IsStaticMagnification || captureArea != lastCaptureArea)
+            {
+                using (var g = Graphics.FromImage(magnifiedBitmap))
+                {
+                    try
+                    {
+                        g.CopyFromScreen(captureX, captureY, 0, 0, new Size(captureWidth, captureHeight));
+                    }
+                    catch
+                    {
+                        return; // Ignore errors
+                    }
+                }
+                Invalidate(); // Trigger repaint
+            }
+            lastCaptureArea = captureArea;
         }
 
         protected override void OnPaint(PaintEventArgs e)
