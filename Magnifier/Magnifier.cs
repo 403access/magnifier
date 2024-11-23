@@ -129,8 +129,10 @@ namespace Magnifier
         {
             base.OnLoad(e);
 
+            // TODO: make it a setting (hotkey for toggling magnifier visibility)
             HotKeyManager.RegisterHotKey(this, Keys.Z, KeyModifiers.Control | KeyModifiers.Shift);
-            HotKeyManager.RegisterHotKey(this, Keys.R, KeyModifiers.Control | KeyModifiers.Shift); // New hotkey for refresh
+            // TODO: make it a setting (hotkey for refresh)
+            HotKeyManager.RegisterHotKey(this, Keys.R, KeyModifiers.Control | KeyModifiers.Shift);
 
             HotKeyManager.HotKeyPressed += HotKeyManager_HotKeyPressed;
         }
@@ -186,6 +188,7 @@ namespace Magnifier
             int captureWidth = (int)(regionSize / zoomFactor);
             int captureHeight = (int)(regionSize / zoomFactor);
 
+            // Ensure the bitmap matches the capture size
             if (magnifiedBitmap.Width != captureWidth || magnifiedBitmap.Height != captureHeight)
             {
                 magnifiedBitmap?.Dispose();
@@ -235,10 +238,14 @@ namespace Magnifier
         {
             using (GraphicsPath path = new GraphicsPath())
             {
+                // TODO: Make it a setting
                 int borderThickness = 12;
                 int innerRadius = borderThickness;
 
+                // Outer circle (full size of the magnifier)
                 Rectangle outerCircle = new Rectangle(0, 0, this.Width, this.Height);
+
+                // Inner circle(creates the hollow center)
                 Rectangle innerCircle = new Rectangle(
                     innerRadius,
                     innerRadius,
@@ -249,10 +256,16 @@ namespace Magnifier
                 path.AddEllipse(outerCircle);
                 path.AddEllipse(innerCircle);
 
+                // Create a PathGradientBrush for the glow effect
                 using (PathGradientBrush brush = new PathGradientBrush(path))
                 {
+                    // Set the center color to transparent to avoid filling the middle
                     brush.CenterColor = Color.Transparent;
+                    // Set the border color for the glow effect
+                    // TODO: Replace with desired color
                     brush.SurroundColors = new[] { Color.Cyan };
+
+                    // Draw the border glow
                     g.FillPath(brush, path);
                 }
             }
@@ -262,6 +275,7 @@ namespace Magnifier
         {
             base.OnResize(e);
 
+            // Ensure the graphics context uses high-quality settings
             int diameter = Math.Min(this.Width, this.Height);
             using (GraphicsPath path = new GraphicsPath())
             {
