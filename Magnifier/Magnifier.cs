@@ -88,27 +88,36 @@ namespace Magnifier
             int captureX = Math.Max(0, cursorPos.X - (regionSize / 2));
             int captureY = Math.Max(0, cursorPos.Y - (regionSize / 2));
 
-            using (var bitmap = new Bitmap(regionSize, regionSize))
+            BufferedGraphicsContext context = BufferedGraphicsManager.Current;
+            using (BufferedGraphics bufferedGraphics = context.Allocate(this.CreateGraphics(), this.ClientRectangle))
             {
-                using (var g = Graphics.FromImage(bitmap))
-                {
-                    try
-                    {
-                        g.CopyFromScreen(captureX, captureY, 0, 0, new Size(regionSize, regionSize));
-                    }
-                    catch
-                    {
-                        return; // Ignore errors
-                    }
-                }
+                Graphics g = bufferedGraphics.Graphics;
+                g.Clear(Color.Transparent);
 
-                using (var g = this.CreateGraphics())
+                using (var bitmap = new Bitmap(regionSize, regionSize))
                 {
+                    using (var screenGraphics = Graphics.FromImage(bitmap))
+                    {
+                        try
+                        {
+                            screenGraphics.CopyFromScreen(captureX, captureY, 0, 0, new Size(regionSize, regionSize));
+                        }
+                        catch
+                        {
+                            return; // Ignore errors
+                        }
+                    }
+
+                    // Draw the magnified content
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                    g.Clear(Color.Transparent);
                     g.DrawImage(bitmap, new Rectangle(0, 0, this.Width, this.Height));
+
+                    // Draw the glowing border
                     DrawGlowingBorder(g);
                 }
+
+                // Render the buffer to the screen
+                bufferedGraphics.Render();
             }
         }
 
