@@ -59,6 +59,25 @@ namespace Magnifier
                 Width = 60
             };
 
+            // Zoom Factor Label and Input
+            var zoomLabel = new Label
+            {
+                Text = "Zoom Factor:",
+                Location = new System.Drawing.Point(20, 60),
+                AutoSize = true
+            };
+
+            var zoomInput = new NumericUpDown
+            {
+                Minimum = 1,
+                Maximum = 10,
+                DecimalPlaces = 1,
+                Increment = 0.1M,
+                Value = (decimal)parentMagnifier.ZoomFactor,
+                Location = new System.Drawing.Point(120, 58),
+                Width = 60
+            };
+
             var saveButton = new Button
             {
                 Text = "Save",
@@ -69,11 +88,14 @@ namespace Magnifier
             saveButton.Click += (s, e) =>
             {
                 parentMagnifier.FPS = (int)fpsInput.Value;
+                parentMagnifier.ZoomFactor = (float)zoomInput.Value;
                 this.Close();
             };
 
             this.Controls.Add(fpsLabel);
             this.Controls.Add(fpsInput);
+            this.Controls.Add(zoomLabel);
+            this.Controls.Add(zoomInput);
             this.Controls.Add(saveButton);
         }
 

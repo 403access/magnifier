@@ -15,6 +15,15 @@ namespace Magnifier
         private NotifyIcon trayIcon;
         private ContextMenuStrip trayMenu;
 
+        public float ZoomFactor
+        {
+            get => zoomFactor;
+            set
+            {
+                zoomFactor = value > 0 ? value : 1.0f; // Ensure zoom factor is positive
+            }
+        }
+
         public int FPS
         {
             get => _fps;
@@ -130,39 +139,32 @@ namespace Magnifier
                 this.Top = cursorPos.Y - this.Height - offsetX;
 
             // Capture screen region
-            int captureX = Math.Max(0, cursorPos.X - (regionSize / 2));
-            int captureY = Math.Max(0, cursorPos.Y - (regionSize / 2));
+            int captureX = Math.Max(0, cursorPos.X - (int)((regionSize / 2) / zoomFactor));
+            int captureY = Math.Max(0, cursorPos.Y - (int)((regionSize / 2) / zoomFactor));
+            int captureWidth = (int)(regionSize / zoomFactor);
+            int captureHeight = (int)(regionSize / zoomFactor);
 
-            BufferedGraphicsContext context = BufferedGraphicsManager.Current;
-            using (BufferedGraphics bufferedGraphics = context.Allocate(this.CreateGraphics(), this.ClientRectangle))
+            using (var bitmap = new Bitmap(captureWidth, captureHeight))
             {
-                Graphics g = bufferedGraphics.Graphics;
-                g.Clear(Color.Transparent);
-
-                using (var bitmap = new Bitmap(regionSize, regionSize))
+                using (var g = Graphics.FromImage(bitmap))
                 {
-                    using (var screenGraphics = Graphics.FromImage(bitmap))
+                    try
                     {
-                        try
-                        {
-                            screenGraphics.CopyFromScreen(captureX, captureY, 0, 0, new Size(regionSize, regionSize));
-                        }
-                        catch
-                        {
-                            return; // Ignore errors
-                        }
+                        g.CopyFromScreen(captureX, captureY, 0, 0, new Size(captureWidth, captureHeight));
                     }
-
-                    // Draw the magnified content
-                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                    g.DrawImage(bitmap, new Rectangle(0, 0, this.Width, this.Height));
-
-                    // Draw the glowing border
-                    DrawGlowingBorder(g);
+                    catch
+                    {
+                        return; // Ignore errors
+                    }
                 }
 
-                // Render the buffer to the screen
-                bufferedGraphics.Render();
+                using (var g = this.CreateGraphics())
+                {
+                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    g.Clear(Color.Transparent);
+                    g.DrawImage(bitmap, new Rectangle(0, 0, this.Width, this.Height));
+                    DrawGlowingBorder(g);
+                }
             }
         }
 
